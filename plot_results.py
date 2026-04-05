@@ -9,8 +9,48 @@ Usage:
 """
 
 import argparse
+import os
+import re
 import numpy as np
 import matplotlib.pyplot as plt
+
+
+def get_column_names(datfile):
+    """Try to extract column names from corresponding LEMS XML file."""
+    # Guess the LEMS file name from dat file
+    basename = os.path.basename(datfile)
+    # c302_C_IClamp.dat -> LEMS_c302_C_IClamp.xml
+    if basename.endswith('.activity.dat'):
+        lems_name = 'LEMS_' + basename.replace('.activity.dat', '.xml')
+    elif basename.endswith('.muscles.dat'):
+        lems_name = 'LEMS_' + basename.replace('.muscles.dat', '.xml')
+    elif basename.endswith('.muscles.activity.dat'):
+        lems_name = 'LEMS_' + basename.replace('.muscles.activity.dat', '.xml')
+    else:
+        lems_name = 'LEMS_' + basename.replace('.dat', '.xml')
+    
+    # Look in examples/ directory
+    lems_paths = [
+        os.path.join(os.path.dirname(datfile), lems_name),
+        os.path.join(os.path.dirname(datfile), 'examples', lems_name),
+        os.path.join('examples', lems_name),
+    ]
+    
+    for lems_path in lems_paths:
+        if os.path.exists(lems_path):
+            try:
+                with open(lems_path, 'r') as f:
+                    content = f.read()
+                # Extract OutputColumn ids
+                # <OutputColumn id="ADAL_v" quantity="ADAL/0/GenericNeuronCell/v"/>
+                pattern = r'<OutputColumn\s+id="([^"]+)"'
+                matches = re.findall(pattern, content)
+                if matches:
+                    return ['time'] + matches
+            except Exception:
+                pass
+    
+    return None
 
 
 def main():
@@ -27,6 +67,9 @@ def main():
     data = np.loadtxt(args.datfile)
     t = data[:, 0] * 1000  # convert s to ms
 
+    # Try to get column names
+    col_names = get_column_names(args.datfile)
+    
     # Determine which columns to plot
     if args.cols:
         cols = args.cols
@@ -36,7 +79,11 @@ def main():
     # Plot
     fig, ax = plt.subplots(figsize=(12, 6))
     for col in cols:
-        ax.plot(t, data[:, col], label=f"col {col}")
+        if col_names and col < len(col_names):
+            label = col_names[col]
+        else:
+            label = f"col {col}"
+        ax.plot(t, data[:, col], label=label, linewidth=1.5)
 
     # Apply limits
     if args.xlim:
@@ -45,15 +92,19 @@ def main():
         ax.set_ylim(args.ylim)
 
     # Labels
-    ax.set_xlabel("Time (ms)")
-    ax.set_ylabel("Value")
+    ax.set_xlabel("Time (ms)", fontsize=12)
+    ax.set_ylabel("Membrane Potential (V)", fontsize=12)
     if args.title:
-        ax.set_title(args.title)
+        ax.set_title(args.title, fontsize=14)
     else:
-        ax.set_title(args.datfile)
+        ax.set_title(os.path.basename(args.datfile), fontsize=14)
 
     if not args.no_legend and len(cols) <= 10:
-        ax.legend()
+        ax.legend(loc='best', fontsize=10)
+    
+    ax.grid(True, alpha=0.3)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
     plt.show()
