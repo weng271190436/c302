@@ -121,3 +121,7 @@ arm64
 /examples/parametersweep/average_last_1percent_GenericNeuronCellW2D.png
 /examples/parametersweep/heatmap_GenericNeuronCellW2D.png
 openworm/
+
+# Virtual environment
+venv/
+.venv/
