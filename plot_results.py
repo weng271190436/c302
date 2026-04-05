@@ -76,14 +76,14 @@ def main():
     else:
         cols = list(range(1, data.shape[1]))  # all except time column
 
-    # Plot
+    # Plot - convert V to mV for display
     fig, ax = plt.subplots(figsize=(12, 6))
     for col in cols:
         if col_names and col < len(col_names):
             label = col_names[col]
         else:
             label = f"col {col}"
-        ax.plot(t, data[:, col], label=label, linewidth=1.5)
+        ax.plot(t, data[:, col] * 1000, label=label, linewidth=1.5)  # V -> mV
 
     # Apply limits
     if args.xlim:
@@ -91,9 +91,16 @@ def main():
     if args.ylim:
         ax.set_ylim(args.ylim)
 
+    # Set tick spacing
+    from matplotlib.ticker import MultipleLocator
+    ax.xaxis.set_major_locator(MultipleLocator(500))  # X every 500ms
+    ax.xaxis.set_minor_locator(MultipleLocator(100))  # minor every 100ms
+    ax.yaxis.set_major_locator(MultipleLocator(20))   # Y every 20mV
+    ax.yaxis.set_minor_locator(MultipleLocator(5))    # minor every 5mV
+
     # Labels
     ax.set_xlabel("Time (ms)", fontsize=12)
-    ax.set_ylabel("Membrane Potential (V)", fontsize=12)
+    ax.set_ylabel("Membrane Potential (mV)", fontsize=12)
     if args.title:
         ax.set_title(args.title, fontsize=14)
     else:
