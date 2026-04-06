@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #f5f3f0; 
+            background: #0d1117; 
             overflow: hidden; 
             font-family: 'Segoe UI', sans-serif;
         }
@@ -15,7 +15,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            color: #333;
+            color: #e6edf3;
             z-index: 100;
             pointer-events: none;
         }
@@ -23,44 +23,44 @@
             font-size: 24px;
             font-weight: 300;
             margin-bottom: 10px;
-            color: #2080c0;
+            color: #58a6ff;
         }
         #info p {
             font-size: 14px;
-            color: #666;
+            color: #8b949e;
             margin: 5px 0;
         }
         #selected {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            color: #333;
+            color: #e6edf3;
             z-index: 100;
             font-size: 16px;
-            background: rgba(255,255,255,0.9);
+            background: rgba(22,27,34,0.9);
             padding: 10px 20px;
             border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         #legend {
             position: absolute;
             top: 20px;
             right: 20px;
-            color: #333;
+            color: #e6edf3;
             z-index: 100;
-            background: rgba(255,255,255,0.9);
+            background: rgba(22,27,34,0.9);
             padding: 15px 20px;
             border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         .legend-item {
             display: flex;
             align-items: center;
             margin: 8px 0;
             font-size: 14px;
-            color: #333;
+            color: #e6edf3;
         }
         .legend-dot {
             width: 12px;
@@ -73,7 +73,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #2080c0;
+            color: #58a6ff;
             font-size: 20px;
             z-index: 200;
         }
@@ -158,7 +158,8 @@
         // ============================================================
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf5f3f0);
+        scene.background = new THREE.Color(0x0d1117);
+        scene.fog = new THREE.Fog(0x0d1117, 15, 35);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(8, 4, 8);
@@ -201,7 +202,7 @@
         scene.add(topLight);
 
         // Grid
-        const grid = new THREE.GridHelper(20, 20, 0xaaaaaa, 0xcccccc);
+        const grid = new THREE.GridHelper(20, 20, 0x21262d, 0x161b22);
         grid.position.y = -1.5;
         scene.add(grid);
 
