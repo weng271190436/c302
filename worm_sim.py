@@ -68,15 +68,15 @@ CONNECTIONS = {
     'AVM': ['AVAL', 'AVAR', 'AVBL', 'AVBR'],
     'PVM': ['AVAL', 'AVAR', 'PVCL'],
     
-    # Command interneurons - EQUAL number of motor neuron targets
-    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9'],
-    'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],
-    'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],
-    'AVBR': ['DB2', 'DB4', 'DB6'],
-    'AVDL': ['DA1', 'DA3'],
-    'AVDR': ['DA2', 'DA4'],
-    'PVCL': ['AVBL', 'DB1', 'DB3', 'DB5', 'DB7'],
-    'PVCR': ['AVBR', 'DB2', 'DB4', 'DB6'],
+    # Command interneurons to motor neurons
+    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9', 'VD1', 'VD3', 'VD5', 'VD7', 'VD9'],
+    'AVAR': ['DA2', 'DA4', 'DA6', 'DA8', 'VD2', 'VD4', 'VD6', 'VD8', 'VD10'],
+    'AVBL': ['DB1', 'DB3', 'DB5', 'DB7', 'VD1', 'VD3', 'VD5', 'VD7'],
+    'AVBR': ['DB2', 'DB4', 'DB6', 'VD2', 'VD4', 'VD6', 'VD8'],
+    'AVDL': ['DA1', 'DA3', 'VD1', 'VD3'],
+    'AVDR': ['DA2', 'DA4', 'VD2', 'VD4'],
+    'PVCL': ['AVBL', 'DB1', 'DB3', 'DB5', 'DB7', 'VD5', 'VD7', 'VD9', 'VD11'],
+    'PVCR': ['AVBR', 'DB2', 'DB4', 'DB6', 'VD6', 'VD8', 'VD10', 'VD12'],
     
     # Motor neurons to muscles - simplified to MD (dorsal) and MV (ventral)
     'DB1': ['MD01', 'MD02', 'MD03', 'MD04'],
@@ -94,7 +94,7 @@ CONNECTIONS = {
     'DA7': ['MD13', 'MD14'], 'DA8': ['MD13', 'MD14'],
     'DA9': ['MD17', 'MD18'],
     
-    # VD neurons - ventral muscles
+    # VD neurons - ventral muscles (antagonist to dorsal)
     'VD1': ['MV01'], 'VD2': ['MV02'], 'VD3': ['MV03'], 'VD4': ['MV04'],
     'VD5': ['MV06'], 'VD6': ['MV08'], 'VD7': ['MV10'], 'VD8': ['MV12'],
     'VD9': ['MV14'], 'VD10': ['MV16'], 'VD11': ['MV18'], 'VD12': ['MV20'],
