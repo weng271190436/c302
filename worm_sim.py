@@ -133,7 +133,7 @@ WORM_COLOR = (180, 150, 120)    # Worm body
 # ============================================================================
 
 class WormSimulator:
-    def __init__(self, width=1400, height=900):
+    def __init__(self, width=1600, height=1000):
         pygame.init()
         self.width = width
         self.height = height
@@ -433,7 +433,7 @@ class WormSimulator:
         
         # Pause indicator
         if self.paused:
-            text = self.big_font.render("PAUSED", True, (255, 255, 100))
+            text = self.big_font.render("PAUSED", True, (200, 50, 50))  # Red
             self.screen.blit(text, (self.width//2 - text.get_width()//2, 
                                    self.height - 40))
     
