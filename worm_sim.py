@@ -60,34 +60,38 @@ NEURONS = {
 # Simplified connectome (which neurons excite which)
 # In reality there are thousands of connections - this is a subset for visualization
 CONNECTIONS = {
-    # Touch response circuit
-    'PLML': ['PVCL', 'PVCR', 'AVBL', 'AVBR'],
-    'PLMR': ['PVCL', 'PVCR', 'AVBL', 'AVBR'],
-    'ALML': ['AVAL', 'AVAR', 'AVDL', 'AVDR'],
-    'ALMR': ['AVAL', 'AVAR', 'AVDL', 'AVDR'],
+    # Touch response circuit - ASYMMETRIC for L/R turning
+    'PLML': ['PVCL', 'AVBL'],  # Left touch → left interneurons → turn right
+    'PLMR': ['PVCR', 'AVBR'],  # Right touch → right interneurons → turn left
+    'ALML': ['AVAL', 'AVDL'],  # Head left touch
+    'ALMR': ['AVAR', 'AVDR'],  # Head right touch
     'AVM': ['AVAL', 'AVAR', 'AVBL', 'AVBR'],
     'PVM': ['AVAL', 'AVAR', 'PVCL'],
     
-    # Command interneurons to motor neurons
-    'AVAL': ['DA1', 'DA2', 'DA3', 'DA4', 'DA5', 'DA6', 'DA7', 'DA8', 'DA9'],
-    'AVAR': ['DA1', 'DA2', 'DA3', 'DA4', 'DA5', 'DA6', 'DA7', 'DA8', 'DA9'],
-    'AVBL': ['DB1', 'DB2', 'DB3', 'DB4', 'DB5', 'DB6', 'DB7'],
-    'AVBR': ['DB1', 'DB2', 'DB3', 'DB4', 'DB5', 'DB6', 'DB7'],
-    'AVDL': ['DA1', 'DA2', 'DA3', 'VA1', 'VA2'],
-    'AVDR': ['DA1', 'DA2', 'DA3', 'VA1', 'VA2'],
-    'PVCL': ['AVBL', 'AVBR', 'DB5', 'DB6', 'VB5', 'VB6'],
-    'PVCR': ['AVBL', 'AVBR', 'DB5', 'DB6', 'VB5', 'VB6'],
+    # Command interneurons to motor neurons - ASYMMETRIC
+    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9'],  # Left backward
+    'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],          # Right backward
+    'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],          # Left forward
+    'AVBR': ['DB2', 'DB4', 'DB6'],                 # Right forward
+    'AVDL': ['DA1', 'DA3'],
+    'AVDR': ['DA2', 'DA4'],
+    'PVCL': ['AVBL', 'DB5', 'VB5'],
+    'PVCR': ['AVBR', 'DB6', 'VB6'],
     
-    # Motor neurons to muscles (simplified)
-    'DA1': ['MDL01', 'MDR01'], 'DA2': ['MDL02', 'MDR02'],
-    'DA3': ['MDL03', 'MDR03'], 'DA4': ['MDL05', 'MDR05'],
-    'DA5': ['MDL08', 'MDR08'], 'DA6': ['MDL11', 'MDR11'],
-    'DA7': ['MDL14', 'MDR14'], 'DA8': ['MDL17', 'MDR17'],
-    'DA9': ['MDL20', 'MDR20'],
-    'DB1': ['MDL01', 'MDR01'], 'DB2': ['MDL02', 'MDR02'],
-    'DB3': ['MDL04', 'MDR04'], 'DB4': ['MDL06', 'MDR06'],
-    'DB5': ['MDL09', 'MDR09'], 'DB6': ['MDL12', 'MDR12'],
-    'DB7': ['MDL15', 'MDR15'],
+    # Motor neurons to muscles - LEFT side
+    'DA1': ['MDL01', 'MDL02'], 'DA3': ['MDL05', 'MDL06'],
+    'DA5': ['MDL09', 'MDL10'], 'DA7': ['MDL15', 'MDL16'],
+    'DA9': ['MDL19', 'MDL20'],
+    'DB1': ['MDL01', 'MDL02'], 'DB3': ['MDL05', 'MDL06'],
+    'DB5': ['MDL09', 'MDL10'], 'DB7': ['MDL15', 'MDL16'],
+    
+    # Motor neurons to muscles - RIGHT side
+    'DA2': ['MDR01', 'MDR02'], 'DA4': ['MDR05', 'MDR06'],
+    'DA6': ['MDR09', 'MDR10'], 'DA8': ['MDR15', 'MDR16'],
+    'DB2': ['MDR01', 'MDR02'], 'DB4': ['MDR05', 'MDR06'],
+    'DB6': ['MDR09', 'MDR10'],
+    
+    # VD neurons - ventral muscles (inhibitory in real life, excitatory here for visual)
     'VD1': ['MVL01', 'MVR01'], 'VD2': ['MVL02', 'MVR02'],
     'VD3': ['MVL03', 'MVR03'], 'VD4': ['MVL04', 'MVR04'],
     'VD5': ['MVL06', 'MVR06'], 'VD6': ['MVL08', 'MVR08'],
@@ -262,12 +266,16 @@ class WormSimulator:
             ventral_l = self.muscle_activity.get(f'MVL{seg_idx:02d}', 0)
             ventral_r = self.muscle_activity.get(f'MVR{seg_idx:02d}', 0)
             
-            # Dorsal contraction bends one way, ventral the other
+            # Left vs right imbalance causes turning
+            left_total = dorsal_l + ventral_l
+            right_total = dorsal_r + ventral_r
+            
+            # Dorsal vs ventral imbalance causes dorsal/ventral bending
             dorsal = (dorsal_l + dorsal_r) / 2
             ventral = (ventral_l + ventral_r) / 2
             
-            # Target angle based on muscle imbalance
-            target_angle = (dorsal - ventral) * 1.2  # radians (bigger bend)
+            # Combined: L/R difference + D/V difference
+            target_angle = (left_total - right_total) * 0.8 + (dorsal - ventral) * 0.6
             
             # Smooth transition
             self.segment_angles[i] += (target_angle - self.segment_angles[i]) * 0.1
