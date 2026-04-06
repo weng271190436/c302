@@ -60,38 +60,42 @@ NEURONS = {
 # Simplified connectome (which neurons excite which)
 # In reality there are thousands of connections - this is a subset for visualization
 CONNECTIONS = {
-    # Touch response circuit - ASYMMETRIC for L/R turning
-    'PLML': ['PVCL', 'AVBL'],  # Left touch → left interneurons → turn right
-    'PLMR': ['PVCR', 'AVBR'],  # Right touch → right interneurons → turn left
-    'ALML': ['AVAL', 'AVDL'],  # Head left touch
-    'ALMR': ['AVAR', 'AVDR'],  # Head right touch
+    # Touch response circuit - SYMMETRIC pathways, different muscles
+    'PLML': ['PVCL', 'AVBL'],  # Left touch → left circuit
+    'PLMR': ['PVCR', 'AVBR'],  # Right touch → right circuit
+    'ALML': ['AVAL', 'AVDL'],
+    'ALMR': ['AVAR', 'AVDR'],
     'AVM': ['AVAL', 'AVAR', 'AVBL', 'AVBR'],
     'PVM': ['AVAL', 'AVAR', 'PVCL'],
     
-    # Command interneurons to motor neurons - ASYMMETRIC
-    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9'],  # Left backward
-    'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],          # Right backward
-    'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],          # Left forward
-    'AVBR': ['DB2', 'DB4', 'DB6'],                 # Right forward
+    # Command interneurons - EQUAL number of motor neuron targets
+    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7'],
+    'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],
+    'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],
+    'AVBR': ['DB2', 'DB4', 'DB6'],
     'AVDL': ['DA1', 'DA3'],
     'AVDR': ['DA2', 'DA4'],
-    'PVCL': ['AVBL', 'DB5', 'DB7'],
-    'PVCR': ['AVBR', 'DB4', 'DB6'],
+    'PVCL': ['AVBL', 'DB1', 'DB3', 'DB5', 'DB7'],  # Direct to motors too
+    'PVCR': ['AVBR', 'DB2', 'DB4', 'DB6'],          # Direct to motors too
     
-    # Motor neurons to muscles - LEFT side (odd numbered DBs)
+    # Motor neurons to muscles - LEFT side (4 muscles each)
+    'DB1': ['MDL01', 'MDL02', 'MDL03', 'MDL04'],
+    'DB3': ['MDL05', 'MDL06', 'MDL07', 'MDL08'],
+    'DB5': ['MDL09', 'MDL10', 'MDL11', 'MDL12'],
+    'DB7': ['MDL13', 'MDL14', 'MDL15', 'MDL16'],
+    
+    # Motor neurons to muscles - RIGHT side (4 muscles each)
+    'DB2': ['MDR01', 'MDR02', 'MDR03', 'MDR04'],
+    'DB4': ['MDR05', 'MDR06', 'MDR07', 'MDR08'],
+    'DB6': ['MDR09', 'MDR10', 'MDR11', 'MDR12'],
+    
+    # DA neurons for backward motion
     'DA1': ['MDL01', 'MDL02'], 'DA3': ['MDL05', 'MDL06'],
-    'DA5': ['MDL09', 'MDL10'], 'DA7': ['MDL15', 'MDL16'],
-    'DA9': ['MDL19', 'MDL20'],
-    'DB1': ['MDL01', 'MDL02'], 'DB3': ['MDL05', 'MDL06'],
-    'DB5': ['MDL09', 'MDL10'], 'DB7': ['MDL15', 'MDL16'],
-    
-    # Motor neurons to muscles - RIGHT side (even numbered DBs)
+    'DA5': ['MDL09', 'MDL10'], 'DA7': ['MDL13', 'MDL14'],
     'DA2': ['MDR01', 'MDR02'], 'DA4': ['MDR05', 'MDR06'],
-    'DA6': ['MDR09', 'MDR10'], 'DA8': ['MDR15', 'MDR16'],
-    'DB2': ['MDR01', 'MDR02'], 'DB4': ['MDR05', 'MDR06'],
-    'DB6': ['MDR09', 'MDR10', 'MDR15', 'MDR16'],  # Added more muscles to balance
+    'DA6': ['MDR09', 'MDR10'], 'DA8': ['MDR13', 'MDR14'],
     
-    # VD neurons - ventral muscles (inhibitory in real life, excitatory here for visual)
+    # VD neurons
     'VD1': ['MVL01', 'MVR01'], 'VD2': ['MVL02', 'MVR02'],
     'VD3': ['MVL03', 'MVR03'], 'VD4': ['MVL04', 'MVR04'],
     'VD5': ['MVL06', 'MVR06'], 'VD6': ['MVL08', 'MVR08'],
