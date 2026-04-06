@@ -72,7 +72,7 @@ CONNECTIONS = {
     'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9'],  # Left backward
     'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],          # Right backward
     'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],          # Left forward
-    'AVBR': ['DB2', 'DB4', 'DB6'],                 # Right forward
+    'AVBR': ['DB2', 'DB4', 'DB6', 'DB7'],          # Right forward (added DB7)
     'AVDL': ['DA1', 'DA3'],
     'AVDR': ['DA2', 'DA4'],
     'PVCL': ['AVBL', 'DB5', 'VB5'],
