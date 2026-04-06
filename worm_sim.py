@@ -181,8 +181,8 @@ class WormSimulator:
         if self.paused:
             return
             
-        decay_rate = 2.0  # How fast activity decays
-        propagation_strength = 0.8  # How much activity propagates
+        decay_rate = 1.5  # How fast activity decays (slower = longer signal)
+        propagation_strength = 1.5  # How much activity propagates (stronger cascade)
         
         # Propagate activity through connections
         new_activity = {n: self.neuron_activity[n] for n in NEURONS}
@@ -227,7 +227,7 @@ class WormSimulator:
             ventral = (ventral_l + ventral_r) / 2
             
             # Target angle based on muscle imbalance
-            target_angle = (dorsal - ventral) * 0.5  # radians
+            target_angle = (dorsal - ventral) * 1.2  # radians (bigger bend)
             
             # Smooth transition
             self.segment_angles[i] += (target_angle - self.segment_angles[i]) * 0.1
