@@ -280,7 +280,7 @@ class WormSimulator:
             ventral = (ventral_l + ventral_r) / 2
             
             # Combined: L/R difference + D/V difference
-            target_angle = (left_total - right_total) * 0.8 + (dorsal - ventral) * 0.6
+            target_angle = (left_total - right_total) * 0.3 + (dorsal - ventral) * 0.25
             
             # Smooth transition
             self.segment_angles[i] += (target_angle - self.segment_angles[i]) * 0.1
