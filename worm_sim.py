@@ -301,6 +301,9 @@ class WormSimulator:
         # Draw worm body
         self._draw_worm_body()
         
+        # Draw muscles
+        self._draw_muscles()
+        
         # Draw connections (faint lines)
         self._draw_connections()
         
@@ -366,6 +369,67 @@ class WormSimulator:
         # Draw tail
         pygame.draw.circle(self.screen, WORM_COLOR,
                           (int(points[-1][0]), int(points[-1][1])), 8)
+        
+        # Store points for muscle drawing
+        self.body_points = points
+    
+    def _draw_muscles(self):
+        """Draw muscles along the body."""
+        if not hasattr(self, 'body_points') or len(self.body_points) < 2:
+            return
+        
+        margin = 320
+        worm_length = self.width - 2 * margin
+        
+        for i in range(1, 21):  # Muscles 01-20
+            # Position along body (0-1)
+            pos = i / 21
+            
+            # Find corresponding body segment
+            seg_idx = int(pos * (len(self.body_points) - 1))
+            if seg_idx >= len(self.body_points) - 1:
+                seg_idx = len(self.body_points) - 2
+            
+            # Interpolate position on body
+            p1 = self.body_points[seg_idx]
+            p2 = self.body_points[seg_idx + 1]
+            t = (pos * (len(self.body_points) - 1)) - seg_idx
+            
+            base_x = p1[0] + t * (p2[0] - p1[0])
+            base_y = p1[1] + t * (p2[1] - p1[1])
+            
+            # Calculate perpendicular direction
+            dx = p2[0] - p1[0]
+            dy = p2[1] - p1[1]
+            length = max(1, math.sqrt(dx*dx + dy*dy))
+            perp_x = -dy / length
+            perp_y = dx / length
+            
+            # Draw 4 muscles at this position (MDL, MDR, MVL, MVR)
+            muscle_offset = 25
+            muscles_at_pos = [
+                (f'MDL{i:02d}', -perp_x * muscle_offset, -perp_y * muscle_offset - 5),  # Dorsal left
+                (f'MDR{i:02d}', -perp_x * muscle_offset, -perp_y * muscle_offset + 5),  # Dorsal right  
+                (f'MVL{i:02d}', perp_x * muscle_offset, perp_y * muscle_offset - 5),    # Ventral left
+                (f'MVR{i:02d}', perp_x * muscle_offset, perp_y * muscle_offset + 5),    # Ventral right
+            ]
+            
+            for muscle_name, ox, oy in muscles_at_pos:
+                activity = self.muscle_activity.get(muscle_name, 0)
+                
+                # Color based on activity
+                r = int(150 + activity * 105)
+                g = int(150 - activity * 100)
+                b = int(150 - activity * 100)
+                color = (min(255, r), max(0, g), max(0, b))
+                
+                mx = base_x + ox
+                my = base_y + oy
+                
+                # Draw muscle as small rectangle
+                size = 3 + int(activity * 3)
+                pygame.draw.rect(self.screen, color, 
+                               (int(mx - size/2), int(my - size/2), size, size))
     
     def _draw_connections(self):
         """Draw synaptic connections as faint lines."""
