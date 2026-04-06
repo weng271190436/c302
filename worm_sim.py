@@ -409,12 +409,14 @@ class WormSimulator:
             perp_y = dx / length
             
             # Draw 4 muscles at this position (MDL, MDR, MVL, MVR)
-            muscle_offset = 25
+            # Dorsal = above body, Ventral = below body
+            # L/R = along body axis (staggered for visibility)
+            muscle_offset = 20
             muscles_at_pos = [
-                (f'MDL{i:02d}', -perp_x * muscle_offset, -perp_y * muscle_offset - 5),  # Dorsal left
-                (f'MDR{i:02d}', -perp_x * muscle_offset, -perp_y * muscle_offset + 5),  # Dorsal right  
-                (f'MVL{i:02d}', perp_x * muscle_offset, perp_y * muscle_offset - 5),    # Ventral left
-                (f'MVR{i:02d}', perp_x * muscle_offset, perp_y * muscle_offset + 5),    # Ventral right
+                (f'MDL{i:02d}', -8, -muscle_offset),   # Dorsal left (above, left)
+                (f'MDR{i:02d}', 8, -muscle_offset),    # Dorsal right (above, right)
+                (f'MVL{i:02d}', -8, muscle_offset),    # Ventral left (below, left)
+                (f'MVR{i:02d}', 8, muscle_offset),     # Ventral right (below, right)
             ]
             
             for muscle_name, ox, oy in muscles_at_pos:
