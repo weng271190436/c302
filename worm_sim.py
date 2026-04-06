@@ -69,7 +69,7 @@ CONNECTIONS = {
     'PVM': ['AVAL', 'AVAR', 'PVCL'],
     
     # Command interneurons - EQUAL number of motor neuron targets
-    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7'],
+    'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'DA9'],
     'AVAR': ['DA2', 'DA4', 'DA6', 'DA8'],
     'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],
     'AVBR': ['DB2', 'DB4', 'DB6'],
@@ -92,6 +92,7 @@ CONNECTIONS = {
     # DA neurons for backward motion
     'DA1': ['MDL01', 'MDL02'], 'DA3': ['MDL05', 'MDL06'],
     'DA5': ['MDL09', 'MDL10'], 'DA7': ['MDL13', 'MDL14'],
+    'DA9': ['MDL17', 'MDL18'],
     'DA2': ['MDR01', 'MDR02'], 'DA4': ['MDR05', 'MDR06'],
     'DA6': ['MDR09', 'MDR10'], 'DA8': ['MDR13', 'MDR14'],
     
