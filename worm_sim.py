@@ -358,10 +358,13 @@ class WormSimulator:
         
         # Draw thick worm body
         if len(points) > 1:
-            # Draw body outline
-            pygame.draw.lines(self.screen, WORM_COLOR, False, points, 25)
-            # Draw body fill (thinner)
-            pygame.draw.lines(self.screen, (200, 180, 150), False, points, 18)
+            # Draw circles at each point to fill gaps
+            for i, (px, py) in enumerate(points):
+                # Taper at tail
+                radius = 12 if i < len(points) - 3 else 12 - (i - (len(points) - 3)) * 3
+                radius = max(4, radius)
+                pygame.draw.circle(self.screen, WORM_COLOR, (int(px), int(py)), radius)
+                pygame.draw.circle(self.screen, (200, 180, 150), (int(px), int(py)), radius - 3)
         
         # Draw head
         pygame.draw.circle(self.screen, (220, 200, 170), 
