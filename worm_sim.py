@@ -265,7 +265,9 @@ class WormSimulator:
             ventral = self.muscle_activity.get(f'MV{seg_idx:02d}', 0)
             
             # Dorsal vs ventral imbalance causes bending
-            target_angle = (dorsal - ventral) * 0.4
+            # Dorsal contracts → bends UP (toward dorsal)
+            # Ventral contracts → bends DOWN (toward ventral)
+            target_angle = (ventral - dorsal) * 0.4
             
             # Smooth transition
             self.segment_angles[i] += (target_angle - self.segment_angles[i]) * 0.1
