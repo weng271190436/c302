@@ -107,8 +107,10 @@ for i in range(1, 21):
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GRAY = (100, 100, 100)
+GRAY = (120, 120, 120)
 DARK_GRAY = (40, 40, 40)
+LIGHT_BG = (245, 243, 240)  # Cream background
+TEXT_COLOR = (50, 50, 50)   # Dark text
 
 # Neuron colors by type
 NEURON_COLORS = {
@@ -253,12 +255,12 @@ class WormSimulator:
     
     def draw(self):
         """Render the simulation."""
-        self.screen.fill(DARK_GRAY)
+        self.screen.fill(LIGHT_BG)
         
         # Draw title
         title = self.big_font.render(
             "C. elegans Neural Simulator - Click neurons to stimulate!", 
-            True, WHITE)
+            True, TEXT_COLOR)
         self.screen.blit(title, (self.width//2 - title.get_width()//2, 10))
         
         # Draw legend
@@ -289,7 +291,7 @@ class WormSimulator:
         ]
         for label, color in items:
             pygame.draw.circle(self.screen, color, (x + 8, y + 8), 8)
-            text = self.font.render(label, True, WHITE)
+            text = self.font.render(label, True, TEXT_COLOR)
             self.screen.blit(text, (x + 22, y + 2))
             y += 22
         
@@ -370,7 +372,7 @@ class WormSimulator:
             pygame.draw.circle(self.screen, WHITE, (x, y), radius, 1)
             
             # Draw label
-            label = self.font.render(name, True, WHITE)
+            label = self.font.render(name, True, TEXT_COLOR)
             self.screen.blit(label, (x - label.get_width()//2, y - radius - 14))
     
     def _draw_info_panel(self):
@@ -399,7 +401,7 @@ class WormSimulator:
                 lines.append(f"  ... and {len(targets)-8} more")
             
             for i, line in enumerate(lines):
-                text = self.font.render(line, True, WHITE)
+                text = self.font.render(line, True, TEXT_COLOR)
                 self.screen.blit(text, (x, y + i * 18))
         
         # Pause indicator
