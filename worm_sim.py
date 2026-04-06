@@ -155,41 +155,60 @@ class WormSimulator:
         
     def _compute_neuron_positions(self):
         """Compute screen positions for neurons based on worm body."""
-        margin = 100
+        margin = 120
         worm_length = self.width - 2 * margin
-        worm_y = self.height // 2
+        worm_y = self.height // 2 + 20
         
-        # Group neurons by approximate position to spread them out
-        position_counts = {}
+        # Manual positioning for cleaner layout
+        # Head interneurons - spread them out in a grid
+        head_interneurons = ['AVAL', 'AVAR', 'AVBL', 'AVBR', 'AVDL', 'AVDR']
+        head_x_start = margin - 30
         
-        for name, (pos, ntype) in NEURONS.items():
-            x = margin + pos * worm_length
-            
-            # Offset based on type (sensory=top, motor=bottom, inter=middle)
-            if ntype == 's':
-                y = worm_y - 80
-            elif ntype == 'i':
-                y = worm_y - 45
-            else:  # motor
-                y = worm_y + 60
-            
-            # Handle L/R pairs - offset them vertically
-            if name.endswith('L'):
-                y -= 15
-            elif name.endswith('R'):
-                y += 15
-            
-            # Spread out neurons at similar x positions
-            x_bucket = int(x / 30)  # Group by ~30px buckets
-            key = (x_bucket, ntype)
-            if key not in position_counts:
-                position_counts[key] = 0
-            
-            # Stagger horizontally if multiple neurons in same bucket
-            x_offset = (position_counts[key] % 3) * 25 - 25
-            position_counts[key] += 1
-            
-            self.neuron_positions[name] = (int(x + x_offset), int(y))
+        for i, name in enumerate(head_interneurons):
+            row = i // 2  # 0, 0, 1, 1, 2, 2
+            col = i % 2   # 0, 1, 0, 1, 0, 1
+            x = head_x_start + col * 40
+            y = worm_y - 80 + row * 30
+            self.neuron_positions[name] = (int(x), int(y))
+        
+        # Tail interneurons
+        self.neuron_positions['PVCL'] = (int(margin + 0.92 * worm_length - 20), worm_y - 60)
+        self.neuron_positions['PVCR'] = (int(margin + 0.92 * worm_length + 20), worm_y - 60)
+        
+        # Sensory neurons - spread out
+        self.neuron_positions['PLML'] = (int(margin + 0.95 * worm_length), worm_y - 100)
+        self.neuron_positions['PLMR'] = (int(margin + 0.95 * worm_length + 40), worm_y - 80)
+        self.neuron_positions['ALML'] = (int(margin + 0.12 * worm_length), worm_y - 120)
+        self.neuron_positions['ALMR'] = (int(margin + 0.18 * worm_length), worm_y - 120)
+        self.neuron_positions['AVM'] = (int(margin + 0.10 * worm_length), worm_y - 100)
+        self.neuron_positions['PVM'] = (int(margin + 0.60 * worm_length), worm_y - 80)
+        
+        # Motor neurons - evenly spaced along bottom
+        motor_neurons = [
+            ('DA1', 0.10), ('DA2', 0.15), ('DA3', 0.25), ('DA4', 0.35),
+            ('DA5', 0.50), ('DA6', 0.65), ('DA7', 0.75), ('DA8', 0.85), ('DA9', 0.90),
+            ('DB1', 0.08), ('DB2', 0.12), ('DB3', 0.20), ('DB4', 0.30),
+            ('DB5', 0.45), ('DB6', 0.60), ('DB7', 0.75),
+            ('VD1', 0.10), ('VD2', 0.15), ('VD3', 0.20), ('VD4', 0.30),
+            ('VD5', 0.40), ('VD6', 0.50), ('VD7', 0.60), ('VD8', 0.70),
+            ('VD9', 0.75), ('VD10', 0.80), ('VD11', 0.85), ('VD12', 0.90),
+        ]
+        
+        # Sort by position and assign evenly spaced x coords
+        motor_neurons.sort(key=lambda x: x[1])
+        num_motors = len(motor_neurons)
+        motor_spacing = worm_length / (num_motors + 1)
+        
+        for i, (name, _) in enumerate(motor_neurons):
+            x = margin + (i + 1) * motor_spacing
+            # Stagger rows: DA=top, DB=middle, VD=bottom
+            if name.startswith('DA'):
+                y = worm_y + 70
+            elif name.startswith('DB'):
+                y = worm_y + 95
+            else:  # VD
+                y = worm_y + 120
+            self.neuron_positions[name] = (int(x), int(y))
     
     def stimulate_neuron(self, name):
         """Stimulate a neuron (set to max activation)."""
