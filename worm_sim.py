@@ -133,7 +133,7 @@ WORM_COLOR = (180, 150, 120)    # Worm body
 # ============================================================================
 
 class WormSimulator:
-    def __init__(self, width=1600, height=1000):
+    def __init__(self, width=1200, height=800):
         pygame.init()
         self.width = width
         self.height = height
@@ -159,7 +159,7 @@ class WormSimulator:
         
     def _compute_neuron_positions(self):
         """Compute screen positions for neurons based on worm body."""
-        margin = 150
+        margin = 250  # More margin = smaller worm, more room to move
         worm_length = self.width - 2 * margin
         worm_y = self.height // 2 + 40
         
@@ -332,7 +332,7 @@ class WormSimulator:
     
     def _draw_worm_body(self):
         """Draw the worm body as connected segments."""
-        margin = 100
+        margin = 250
         worm_length = self.width - 2 * margin
         segment_length = worm_length / self.num_segments
         
