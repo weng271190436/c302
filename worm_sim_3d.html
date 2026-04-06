@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C. elegans 3D Neural Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0f; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            z-index: 100;
+            pointer-events: none;
+        }
+        #info h1 {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            color: #7fdbff;
+        }
+        #info p {
+            font-size: 14px;
+            color: #888;
+            margin: 5px 0;
+        }
+        #selected {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #fff;
+            z-index: 100;
+            font-size: 16px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        #legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #7fdbff;
+            font-size: 20px;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Loading...</div>
+    <div id="info">
+        <h1>🧠 C. elegans Neural Simulator</h1>
+        <p>Click neurons to stimulate</p>
+        <p>Drag to rotate • Scroll to zoom</p>
+    </div>
+    <div id="legend">
+        <div class="legend-item"><div class="legend-dot" style="background: #ff9500;"></div>Sensory</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #00d4ff;"></div>Interneuron</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #39ff14;"></div>Motor</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ff3366;"></div>Active</div>
+    </div>
+    <div id="selected">Click a neuron to stimulate</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ============================================================
+        // WORM DATA
+        // ============================================================
+        
+        const NEURONS = {
+            'PLML': { pos: 0.95, type: 's' }, 'PLMR': { pos: 0.95, type: 's' },
+            'ALML': { pos: 0.15, type: 's' }, 'ALMR': { pos: 0.15, type: 's' },
+            'AVM': { pos: 0.12, type: 's' }, 'PVM': { pos: 0.6, type: 's' },
+            'AVAL': { pos: 0.08, type: 'i' }, 'AVAR': { pos: 0.08, type: 'i' },
+            'AVBL': { pos: 0.08, type: 'i' }, 'AVBR': { pos: 0.08, type: 'i' },
+            'PVCL': { pos: 0.92, type: 'i' }, 'PVCR': { pos: 0.92, type: 'i' },
+            'DA1': { pos: 0.1, type: 'm' }, 'DA3': { pos: 0.25, type: 'm' },
+            'DA5': { pos: 0.5, type: 'm' }, 'DA7': { pos: 0.75, type: 'm' },
+            'DB1': { pos: 0.08, type: 'm' }, 'DB3': { pos: 0.2, type: 'm' },
+            'DB5': { pos: 0.45, type: 'm' }, 'DB7': { pos: 0.75, type: 'm' },
+            'VD1': { pos: 0.1, type: 'm' }, 'VD3': { pos: 0.2, type: 'm' },
+            'VD5': { pos: 0.4, type: 'm' }, 'VD7': { pos: 0.6, type: 'm' },
+        };
+
+        const CONNECTIONS = {
+            'PLML': ['PVCL', 'AVBL'],
+            'PLMR': ['PVCR', 'AVBR'],
+            'ALML': ['AVAL'], 'ALMR': ['AVAR'],
+            'AVM': ['AVAL', 'AVAR', 'AVBL', 'AVBR'],
+            'PVM': ['AVAL', 'PVCL'],
+            'AVAL': ['DA1', 'DA3', 'DA5', 'DA7', 'VD1', 'VD3', 'VD5'],
+            'AVAR': ['DA1', 'DA3', 'DA5', 'DA7', 'VD1', 'VD3', 'VD5'],
+            'AVBL': ['DB1', 'DB3', 'DB5', 'DB7'],
+            'AVBR': ['DB1', 'DB3', 'DB5', 'DB7'],
+            'PVCL': ['AVBL', 'DB5', 'DB7', 'VD5', 'VD7'],
+            'PVCR': ['AVBR', 'DB5', 'DB7', 'VD5', 'VD7'],
+        };
+
+        const COLORS = {
+            's': new THREE.Color(0xff9500),  // Orange - sensory
+            'i': new THREE.Color(0x00d4ff),  // Cyan - interneuron
+            'm': new THREE.Color(0x39ff14),  // Green - motor
+        };
+
+        // ============================================================
+        // SCENE SETUP
+        // ============================================================
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0f);
+        scene.fog = new THREE.Fog(0x0a0a0f, 15, 30);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(8, 4, 8);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        // Post-processing (bloom effect)
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.8, 0.4, 0.85
+        );
+        composer.addPass(bloomPass);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(5, 0, 0);
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+        mainLight.position.set(10, 10, 10);
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x4080ff, 0.3);
+        fillLight.position.set(-5, -5, -5);
+        scene.add(fillLight);
+
+        // Grid
+        const grid = new THREE.GridHelper(20, 20, 0x222233, 0x111122);
+        grid.position.y = -1.5;
+        scene.add(grid);
+
+        // ============================================================
+        // WORM BODY
+        // ============================================================
+
+        const wormLength = 10;
+        const numSegments = 30;
+        const segmentLength = wormLength / numSegments;
+        const bodySegments = [];
+        const segmentAngles = new Array(numSegments).fill(0);
+
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: 0xddccaa,
+            roughness: 0.3,
+            metalness: 0.1,
+            transparent: true,
+            opacity: 0.85,
+        });
+
+        // Create smooth body using spheres
+        for (let i = 0; i < numSegments; i++) {
+            const radius = 0.35 - (i / numSegments) * 0.15;
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(radius, 16, 12),
+                bodyMaterial
+            );
+            sphere.position.set(i * segmentLength, 0, 0);
+            scene.add(sphere);
+            bodySegments.push(sphere);
+        }
+
+        // Head
+        const headGeo = new THREE.SphereGeometry(0.45, 20, 16);
+        const head = new THREE.Mesh(headGeo, new THREE.MeshStandardMaterial({
+            color: 0xeeddcc,
+            roughness: 0.2,
+        }));
+        head.position.set(-0.3, 0, 0);
+        scene.add(head);
+
+        // ============================================================
+        // NEURONS
+        // ============================================================
+
+        const neuronObjects = {};
+        const neuronActivity = {};
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        const glowMaterial = (color) => new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 0.5,
+            roughness: 0.2,
+            metalness: 0.8,
+        });
+
+        Object.entries(NEURONS).forEach(([name, data]) => {
+            const x = data.pos * wormLength;
+            let y = 0, z = 0;
+            
+            // Position based on type and L/R
+            if (data.type === 's') {
+                y = 0.9;
+                z = name.endsWith('L') ? 0.4 : name.endsWith('R') ? -0.4 : 0;
+            } else if (data.type === 'i') {
+                y = 0.6;
+                z = name.endsWith('L') ? 0.5 : name.endsWith('R') ? -0.5 : 0;
+            } else {
+                y = -0.6;
+                if (name.startsWith('DA')) z = 0.4;
+                else if (name.startsWith('DB')) z = 0;
+                else z = -0.4;
+            }
+
+            const geo = new THREE.SphereGeometry(0.12, 16, 12);
+            const mat = glowMaterial(COLORS[data.type]);
+            const neuron = new THREE.Mesh(geo, mat);
+            neuron.position.set(x, y, z);
+            neuron.userData = { name, type: data.type, baseColor: COLORS[data.type].clone() };
+            scene.add(neuron);
+            
+            neuronObjects[name] = neuron;
+            neuronActivity[name] = 0;
+        });
+
+        // Connection lines
+        const lineMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x334455, 
+            transparent: true, 
+            opacity: 0.3 
+        });
+
+        Object.entries(CONNECTIONS).forEach(([source, targets]) => {
+            if (!neuronObjects[source]) return;
+            targets.forEach(target => {
+                if (!neuronObjects[target]) return;
+                const points = [
+                    neuronObjects[source].position.clone(),
+                    neuronObjects[target].position.clone()
+                ];
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geo, lineMaterial);
+                scene.add(line);
+            });
+        });
+
+        // ============================================================
+        // MUSCLES
+        // ============================================================
+
+        const muscleActivity = {};
+        const muscleObjects = {};
+
+        for (let i = 1; i <= 16; i += 2) {
+            const x = (i / 20) * wormLength;
+            
+            // Dorsal
+            const mdGeo = new THREE.BoxGeometry(0.25, 0.08, 0.15);
+            const mdMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const md = new THREE.Mesh(mdGeo, mdMat);
+            md.position.set(x, 0.55, 0);
+            scene.add(md);
+            muscleObjects[`MD${String(i).padStart(2, '0')}`] = md;
+            muscleActivity[`MD${String(i).padStart(2, '0')}`] = 0;
+
+            // Ventral
+            const mvMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const mv = new THREE.Mesh(mdGeo.clone(), mvMat);
+            mv.position.set(x, -0.55, 0);
+            scene.add(mv);
+            muscleObjects[`MV${String(i).padStart(2, '0')}`] = mv;
+            muscleActivity[`MV${String(i).padStart(2, '0')}`] = 0;
+        }
+
+        // ============================================================
+        // INTERACTION
+        // ============================================================
+
+        let selectedNeuron = null;
+
+        renderer.domElement.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const neurons = Object.values(neuronObjects);
+            const intersects = raycaster.intersectObjects(neurons);
+            
+            if (intersects.length > 0) {
+                const name = intersects[0].object.userData.name;
+                neuronActivity[name] = 1.0;
+                selectedNeuron = name;
+                document.getElementById('selected').innerHTML = 
+                    `<span style="color: #7fdbff">Stimulated:</span> ${name}`;
+            }
+        });
+
+        // ============================================================
+        // ANIMATION LOOP
+        // ============================================================
+
+        document.getElementById('loading').style.display = 'none';
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
+
+            // Propagate activity
+            const newActivity = { ...neuronActivity };
+            const newMuscle = { ...muscleActivity };
+
+            Object.entries(CONNECTIONS).forEach(([source, targets]) => {
+                if (neuronActivity[source] > 0.1) {
+                    targets.forEach(target => {
+                        if (target in newActivity) {
+                            newActivity[target] = Math.min(1, newActivity[target] + 
+                                neuronActivity[source] * 1.5 * dt * 3);
+                        }
+                    });
+                }
+            });
+
+            // Motor to muscle
+            ['DA1', 'DA3', 'DA5', 'DA7', 'DB1', 'DB3', 'DB5', 'DB7'].forEach((n, i) => {
+                const muscleIdx = [1, 5, 9, 13, 1, 5, 9, 13][i];
+                const mname = `MD${String(muscleIdx).padStart(2, '0')}`;
+                if (neuronActivity[n] > 0.1 && mname in newMuscle) {
+                    newMuscle[mname] = Math.min(1, newMuscle[mname] + neuronActivity[n] * 1.5 * dt * 3);
+                }
+            });
+
+            ['VD1', 'VD3', 'VD5', 'VD7'].forEach((n, i) => {
+                const muscleIdx = [1, 5, 9, 13][i];
+                const mname = `MV${String(muscleIdx).padStart(2, '0')}`;
+                if (neuronActivity[n] > 0.1 && mname in newMuscle) {
+                    newMuscle[mname] = Math.min(1, newMuscle[mname] + neuronActivity[n] * 1.5 * dt * 3);
+                }
+            });
+
+            // Decay
+            Object.keys(newActivity).forEach(n => {
+                newActivity[n] = Math.max(0, newActivity[n] - 1.5 * dt);
+            });
+            Object.keys(newMuscle).forEach(m => {
+                newMuscle[m] = Math.max(0, newMuscle[m] - 1.5 * dt);
+            });
+
+            Object.assign(neuronActivity, newActivity);
+            Object.assign(muscleActivity, newMuscle);
+
+            // Update neuron visuals
+            Object.entries(neuronObjects).forEach(([name, obj]) => {
+                const activity = neuronActivity[name];
+                if (activity > 0.1) {
+                    obj.material.emissive.setHex(0xff3366);
+                    obj.material.emissiveIntensity = 0.5 + activity * 1.5;
+                    obj.scale.setScalar(1 + activity * 0.5);
+                } else {
+                    obj.material.emissive.copy(obj.userData.baseColor);
+                    obj.material.emissiveIntensity = 0.3;
+                    obj.scale.setScalar(1);
+                }
+            });
+
+            // Update muscle visuals
+            Object.entries(muscleObjects).forEach(([name, obj]) => {
+                const activity = muscleActivity[name] || 0;
+                const r = 0.4 + activity * 0.6;
+                const g = 0.4 - activity * 0.3;
+                const b = 0.4 - activity * 0.3;
+                obj.material.color.setRGB(r, g, b);
+            });
+
+            // Body bending
+            for (let i = 0; i < numSegments; i++) {
+                const segIdx = Math.floor((i / numSegments) * 16) + 1;
+                const mdName = `MD${String(segIdx).padStart(2, '0')}`;
+                const mvName = `MV${String(segIdx).padStart(2, '0')}`;
+                const dorsal = muscleActivity[mdName] || 0;
+                const ventral = muscleActivity[mvName] || 0;
+                const targetAngle = (ventral - dorsal) * 0.15;
+                segmentAngles[i] += (targetAngle - segmentAngles[i]) * 0.1;
+            }
+
+            // Rebuild body
+            let x = 0, y = 0, angle = 0;
+            for (let i = 0; i < numSegments; i++) {
+                angle += segmentAngles[i];
+                bodySegments[i].position.set(x, y, 0);
+                x += Math.cos(angle) * segmentLength;
+                y += Math.sin(angle) * segmentLength;
+            }
+            head.position.set(bodySegments[0].position.x - 0.3, bodySegments[0].position.y, 0);
+
+            controls.update();
+            composer.render();
+        }
+
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
