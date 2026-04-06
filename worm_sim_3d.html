@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #0a0a0f; 
+            background: #f5f3f0; 
             overflow: hidden; 
             font-family: 'Segoe UI', sans-serif;
         }
@@ -15,7 +15,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            color: #fff;
+            color: #333;
             z-index: 100;
             pointer-events: none;
         }
@@ -23,41 +23,44 @@
             font-size: 24px;
             font-weight: 300;
             margin-bottom: 10px;
-            color: #7fdbff;
+            color: #2080c0;
         }
         #info p {
             font-size: 14px;
-            color: #888;
+            color: #666;
             margin: 5px 0;
         }
         #selected {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            color: #fff;
+            color: #333;
             z-index: 100;
             font-size: 16px;
-            background: rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.9);
             padding: 10px 20px;
             border-radius: 8px;
-            border: 1px solid #333;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         #legend {
             position: absolute;
             top: 20px;
             right: 20px;
-            color: #fff;
+            color: #333;
             z-index: 100;
-            background: rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.9);
             padding: 15px 20px;
             border-radius: 8px;
-            border: 1px solid #333;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .legend-item {
             display: flex;
             align-items: center;
             margin: 8px 0;
             font-size: 14px;
+            color: #333;
         }
         .legend-dot {
             width: 12px;
@@ -70,7 +73,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #7fdbff;
+            color: #2080c0;
             font-size: 20px;
             z-index: 200;
         }
@@ -138,6 +141,10 @@
             'AVBR': ['DB1', 'DB3', 'DB5', 'DB7'],
             'PVCL': ['AVBL', 'DB5', 'DB7', 'VD5', 'VD7'],
             'PVCR': ['AVBR', 'DB5', 'DB7', 'VD5', 'VD7'],
+            // Motor to muscles - L/R specific
+            'DA1': ['MDL01'], 'DA3': ['MDL05'], 'DA5': ['MDL09'], 'DA7': ['MDL13'],
+            'DB1': ['MDR01'], 'DB3': ['MDR05'], 'DB5': ['MDR09'], 'DB7': ['MDR13'],
+            'VD1': ['MV01'], 'VD3': ['MV05'], 'VD5': ['MV09'], 'VD7': ['MV13'],
         };
 
         const COLORS = {
@@ -151,8 +158,7 @@
         // ============================================================
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0f);
-        scene.fog = new THREE.Fog(0x0a0a0f, 15, 30);
+        scene.background = new THREE.Color(0xf5f3f0);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(8, 4, 8);
@@ -191,7 +197,7 @@
         scene.add(fillLight);
 
         // Grid
-        const grid = new THREE.GridHelper(20, 20, 0x222233, 0x111122);
+        const grid = new THREE.GridHelper(20, 20, 0xcccccc, 0xdddddd);
         grid.position.y = -1.5;
         scene.add(grid);
 
@@ -203,7 +209,8 @@
         const numSegments = 30;
         const segmentLength = wormLength / numSegments;
         const bodySegments = [];
-        const segmentAngles = new Array(numSegments).fill(0);
+        const segmentAnglesY = new Array(numSegments).fill(0);  // Up/down
+        const segmentAnglesZ = new Array(numSegments).fill(0);  // Left/right
 
         const bodyMaterial = new THREE.MeshStandardMaterial({
             color: 0xddccaa,
@@ -308,21 +315,29 @@
         const muscleActivity = {};
         const muscleObjects = {};
 
-        for (let i = 1; i <= 16; i += 2) {
+        for (let i = 1; i <= 16; i += 4) {
             const x = (i / 20) * wormLength;
             
-            // Dorsal
-            const mdGeo = new THREE.BoxGeometry(0.25, 0.08, 0.15);
-            const mdMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
-            const md = new THREE.Mesh(mdGeo, mdMat);
-            md.position.set(x, 0.55, 0);
-            scene.add(md);
-            muscleObjects[`MD${String(i).padStart(2, '0')}`] = md;
-            muscleActivity[`MD${String(i).padStart(2, '0')}`] = 0;
+            // Dorsal Left (top-left)
+            const mdlGeo = new THREE.BoxGeometry(0.25, 0.08, 0.12);
+            const mdlMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const mdl = new THREE.Mesh(mdlGeo, mdlMat);
+            mdl.position.set(x, 0.55, 0.2);
+            scene.add(mdl);
+            muscleObjects[`MDL${String(i).padStart(2, '0')}`] = mdl;
+            muscleActivity[`MDL${String(i).padStart(2, '0')}`] = 0;
+
+            // Dorsal Right (top-right)
+            const mdrMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const mdr = new THREE.Mesh(mdlGeo.clone(), mdrMat);
+            mdr.position.set(x, 0.55, -0.2);
+            scene.add(mdr);
+            muscleObjects[`MDR${String(i).padStart(2, '0')}`] = mdr;
+            muscleActivity[`MDR${String(i).padStart(2, '0')}`] = 0;
 
             // Ventral
             const mvMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
-            const mv = new THREE.Mesh(mdGeo.clone(), mvMat);
+            const mv = new THREE.Mesh(mdlGeo.clone(), mvMat);
             mv.position.set(x, -0.55, 0);
             scene.add(mv);
             muscleObjects[`MV${String(i).padStart(2, '0')}`] = mv;
@@ -380,9 +395,17 @@
             });
 
             // Motor to muscle
-            ['DA1', 'DA3', 'DA5', 'DA7', 'DB1', 'DB3', 'DB5', 'DB7'].forEach((n, i) => {
-                const muscleIdx = [1, 5, 9, 13, 1, 5, 9, 13][i];
-                const mname = `MD${String(muscleIdx).padStart(2, '0')}`;
+            ['DA1', 'DA3', 'DA5', 'DA7'].forEach((n, i) => {
+                const muscleIdx = [1, 5, 9, 13][i];
+                const mname = `MDL${String(muscleIdx).padStart(2, '0')}`;
+                if (neuronActivity[n] > 0.1 && mname in newMuscle) {
+                    newMuscle[mname] = Math.min(1, newMuscle[mname] + neuronActivity[n] * 1.5 * dt * 3);
+                }
+            });
+
+            ['DB1', 'DB3', 'DB5', 'DB7'].forEach((n, i) => {
+                const muscleIdx = [1, 5, 9, 13][i];
+                const mname = `MDR${String(muscleIdx).padStart(2, '0')}`;
                 if (neuronActivity[n] > 0.1 && mname in newMuscle) {
                     newMuscle[mname] = Math.min(1, newMuscle[mname] + neuronActivity[n] * 1.5 * dt * 3);
                 }
@@ -430,26 +453,44 @@
                 obj.material.color.setRGB(r, g, b);
             });
 
-            // Body bending
+            // Body bending - Y (up/down) and Z (left/right)
             for (let i = 0; i < numSegments; i++) {
                 const segIdx = Math.floor((i / numSegments) * 16) + 1;
-                const mdName = `MD${String(segIdx).padStart(2, '0')}`;
-                const mvName = `MV${String(segIdx).padStart(2, '0')}`;
-                const dorsal = muscleActivity[mdName] || 0;
+                // Round to nearest muscle index (1, 5, 9, 13)
+                const nearestIdx = Math.floor((segIdx + 2) / 4) * 4 - 3;
+                const muscleIdxStr = String(Math.max(1, Math.min(13, nearestIdx))).padStart(2, '0');
+                
+                const mdlName = `MDL${muscleIdxStr}`;
+                const mdrName = `MDR${muscleIdxStr}`;
+                const mvName = `MV${muscleIdxStr}`;
+                
+                const dorsalL = muscleActivity[mdlName] || 0;
+                const dorsalR = muscleActivity[mdrName] || 0;
                 const ventral = muscleActivity[mvName] || 0;
-                const targetAngle = (ventral - dorsal) * 0.15;
-                segmentAngles[i] += (targetAngle - segmentAngles[i]) * 0.1;
+                const dorsal = (dorsalL + dorsalR) / 2;
+                
+                // Up/down: ventral vs dorsal
+                const targetAngleY = (ventral - dorsal) * 0.2;
+                segmentAnglesY[i] += (targetAngleY - segmentAnglesY[i]) * 0.1;
+                
+                // Left/right: dorsalL vs dorsalR
+                const targetAngleZ = (dorsalR - dorsalL) * 0.25;
+                segmentAnglesZ[i] += (targetAngleZ - segmentAnglesZ[i]) * 0.1;
             }
 
-            // Rebuild body
-            let x = 0, y = 0, angle = 0;
+            // Rebuild body with 3D bending
+            let x = 0, y = 0, z = 0;
+            let angleY = 0, angleZ = 0;
+            
             for (let i = 0; i < numSegments; i++) {
-                angle += segmentAngles[i];
-                bodySegments[i].position.set(x, y, 0);
-                x += Math.cos(angle) * segmentLength;
-                y += Math.sin(angle) * segmentLength;
+                angleY += segmentAnglesY[i];
+                angleZ += segmentAnglesZ[i];
+                bodySegments[i].position.set(x, y, z);
+                x += Math.cos(angleY) * Math.cos(angleZ) * segmentLength;
+                y += Math.sin(angleY) * segmentLength;
+                z += Math.sin(angleZ) * segmentLength;
             }
-            head.position.set(bodySegments[0].position.x - 0.3, bodySegments[0].position.y, 0);
+            head.position.set(bodySegments[0].position.x - 0.3, bodySegments[0].position.y, bodySegments[0].position.z);
 
             controls.update();
             composer.render();
