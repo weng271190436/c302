@@ -159,7 +159,7 @@ class WormSimulator:
         
     def _compute_neuron_positions(self):
         """Compute screen positions for neurons based on worm body."""
-        margin = 250  # More margin = smaller worm, more room to move
+        margin = 320  # More margin = smaller worm, more room to move
         worm_length = self.width - 2 * margin
         worm_y = self.height // 2 + 40
         
@@ -332,7 +332,7 @@ class WormSimulator:
     
     def _draw_worm_body(self):
         """Draw the worm body as connected segments."""
-        margin = 250
+        margin = 320
         worm_length = self.width - 2 * margin
         segment_length = worm_length / self.num_segments
         
