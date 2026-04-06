@@ -473,12 +473,12 @@
                 const dorsal = (dorsalL + dorsalR) / 2;
                 
                 // Up/down: ventral vs dorsal
-                const targetAngleY = (ventral - dorsal) * 0.2;
-                segmentAnglesY[i] += (targetAngleY - segmentAnglesY[i]) * 0.1;
+                const targetAngleY = (ventral - dorsal) * 0.5;
+                segmentAnglesY[i] += (targetAngleY - segmentAnglesY[i]) * 0.15;
                 
                 // Left/right: dorsalL vs dorsalR
-                const targetAngleZ = (dorsalR - dorsalL) * 0.25;
-                segmentAnglesZ[i] += (targetAngleZ - segmentAnglesZ[i]) * 0.1;
+                const targetAngleZ = (dorsalR - dorsalL) * 0.6;
+                segmentAnglesZ[i] += (targetAngleZ - segmentAnglesZ[i]) * 0.15;
             }
 
             // Rebuild body with 3D bending
