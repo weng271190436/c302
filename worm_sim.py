@@ -408,20 +408,26 @@ class WormSimulator:
             perp_x = -dy / length
             perp_y = dx / length
             
-            # Draw 4 muscles at this position (MDL, MDR, MVL, MVR)
-            # Dorsal = above body, Ventral = below body
-            # L/R = along body axis (staggered for visibility)
-            muscle_offset = 20
+            # Draw 2 muscles at this position (MD = dorsal, MV = ventral)
+            # Combine L/R activity for display
+            muscle_offset = 22
+            
+            # Dorsal muscle (above) - combine MDL + MDR
+            mdl_act = self.muscle_activity.get(f'MDL{i:02d}', 0)
+            mdr_act = self.muscle_activity.get(f'MDR{i:02d}', 0)
+            dorsal_activity = max(mdl_act, mdr_act)
+            
+            # Ventral muscle (below) - combine MVL + MVR
+            mvl_act = self.muscle_activity.get(f'MVL{i:02d}', 0)
+            mvr_act = self.muscle_activity.get(f'MVR{i:02d}', 0)
+            ventral_activity = max(mvl_act, mvr_act)
+            
             muscles_at_pos = [
-                (f'MDL{i:02d}', -8, -muscle_offset),   # Dorsal left (above, left)
-                (f'MDR{i:02d}', 8, -muscle_offset),    # Dorsal right (above, right)
-                (f'MVL{i:02d}', -8, muscle_offset),    # Ventral left (below, left)
-                (f'MVR{i:02d}', 8, muscle_offset),     # Ventral right (below, right)
+                ('MD', 0, -muscle_offset, dorsal_activity),   # Dorsal (above)
+                ('MV', 0, muscle_offset, ventral_activity),   # Ventral (below)
             ]
             
-            for muscle_name, ox, oy in muscles_at_pos:
-                activity = self.muscle_activity.get(muscle_name, 0)
-                
+            for label, ox, oy, activity in muscles_at_pos:
                 # Color based on activity
                 r = int(150 + activity * 105)
                 g = int(150 - activity * 100)
@@ -432,7 +438,7 @@ class WormSimulator:
                 my = base_y + oy
                 
                 # Draw muscle as small rectangle
-                size = 3 + int(activity * 3)
+                size = 4 + int(activity * 4)
                 pygame.draw.rect(self.screen, color, 
                                (int(mx - size/2), int(my - size/2), size, size))
     
