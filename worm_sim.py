@@ -75,40 +75,35 @@ CONNECTIONS = {
     'AVBR': ['DB2', 'DB4', 'DB6'],
     'AVDL': ['DA1', 'DA3'],
     'AVDR': ['DA2', 'DA4'],
-    'PVCL': ['AVBL', 'DB1', 'DB3', 'DB5', 'DB7'],  # Direct to motors too
-    'PVCR': ['AVBR', 'DB2', 'DB4', 'DB6'],          # Direct to motors too
+    'PVCL': ['AVBL', 'DB1', 'DB3', 'DB5', 'DB7'],
+    'PVCR': ['AVBR', 'DB2', 'DB4', 'DB6'],
     
-    # Motor neurons to muscles - LEFT side (4 muscles each)
-    'DB1': ['MDL01', 'MDL02', 'MDL03', 'MDL04'],
-    'DB3': ['MDL05', 'MDL06', 'MDL07', 'MDL08'],
-    'DB5': ['MDL09', 'MDL10', 'MDL11', 'MDL12'],
-    'DB7': ['MDL13', 'MDL14', 'MDL15', 'MDL16'],
-    
-    # Motor neurons to muscles - RIGHT side (4 muscles each)
-    'DB2': ['MDR01', 'MDR02', 'MDR03', 'MDR04'],
-    'DB4': ['MDR05', 'MDR06', 'MDR07', 'MDR08'],
-    'DB6': ['MDR09', 'MDR10', 'MDR11', 'MDR12'],
+    # Motor neurons to muscles - simplified to MD (dorsal) and MV (ventral)
+    'DB1': ['MD01', 'MD02', 'MD03', 'MD04'],
+    'DB2': ['MD01', 'MD02', 'MD03', 'MD04'],
+    'DB3': ['MD05', 'MD06', 'MD07', 'MD08'],
+    'DB4': ['MD05', 'MD06', 'MD07', 'MD08'],
+    'DB5': ['MD09', 'MD10', 'MD11', 'MD12'],
+    'DB6': ['MD09', 'MD10', 'MD11', 'MD12'],
+    'DB7': ['MD13', 'MD14', 'MD15', 'MD16'],
     
     # DA neurons for backward motion
-    'DA1': ['MDL01', 'MDL02'], 'DA3': ['MDL05', 'MDL06'],
-    'DA5': ['MDL09', 'MDL10'], 'DA7': ['MDL13', 'MDL14'],
-    'DA9': ['MDL17', 'MDL18'],
-    'DA2': ['MDR01', 'MDR02'], 'DA4': ['MDR05', 'MDR06'],
-    'DA6': ['MDR09', 'MDR10'], 'DA8': ['MDR13', 'MDR14'],
+    'DA1': ['MD01', 'MD02'], 'DA2': ['MD01', 'MD02'],
+    'DA3': ['MD05', 'MD06'], 'DA4': ['MD05', 'MD06'],
+    'DA5': ['MD09', 'MD10'], 'DA6': ['MD09', 'MD10'],
+    'DA7': ['MD13', 'MD14'], 'DA8': ['MD13', 'MD14'],
+    'DA9': ['MD17', 'MD18'],
     
-    # VD neurons
-    'VD1': ['MVL01', 'MVR01'], 'VD2': ['MVL02', 'MVR02'],
-    'VD3': ['MVL03', 'MVR03'], 'VD4': ['MVL04', 'MVR04'],
-    'VD5': ['MVL06', 'MVR06'], 'VD6': ['MVL08', 'MVR08'],
-    'VD7': ['MVL10', 'MVR10'], 'VD8': ['MVL12', 'MVR12'],
-    'VD9': ['MVL14', 'MVR14'], 'VD10': ['MVL16', 'MVR16'],
-    'VD11': ['MVL18', 'MVR18'], 'VD12': ['MVL20', 'MVR20'],
+    # VD neurons - ventral muscles
+    'VD1': ['MV01'], 'VD2': ['MV02'], 'VD3': ['MV03'], 'VD4': ['MV04'],
+    'VD5': ['MV06'], 'VD6': ['MV08'], 'VD7': ['MV10'], 'VD8': ['MV12'],
+    'VD9': ['MV14'], 'VD10': ['MV16'], 'VD11': ['MV18'], 'VD12': ['MV20'],
 }
 
-# Muscles along the body (24 segments, dorsal left/right, ventral left/right)
+# Muscles along the body (simplified: dorsal and ventral only)
 MUSCLES = []
 for i in range(1, 21):
-    MUSCLES.extend([f'MDL{i:02d}', f'MDR{i:02d}', f'MVL{i:02d}', f'MVR{i:02d}'])
+    MUSCLES.extend([f'MD{i:02d}', f'MV{i:02d}'])
 
 # ============================================================================
 # COLORS
@@ -266,21 +261,11 @@ class WormSimulator:
         for i in range(self.num_segments):
             # Get muscle activity for this segment
             seg_idx = i + 1
-            dorsal_l = self.muscle_activity.get(f'MDL{seg_idx:02d}', 0)
-            dorsal_r = self.muscle_activity.get(f'MDR{seg_idx:02d}', 0)
-            ventral_l = self.muscle_activity.get(f'MVL{seg_idx:02d}', 0)
-            ventral_r = self.muscle_activity.get(f'MVR{seg_idx:02d}', 0)
+            dorsal = self.muscle_activity.get(f'MD{seg_idx:02d}', 0)
+            ventral = self.muscle_activity.get(f'MV{seg_idx:02d}', 0)
             
-            # Left vs right imbalance causes turning
-            left_total = dorsal_l + ventral_l
-            right_total = dorsal_r + ventral_r
-            
-            # Dorsal vs ventral imbalance causes dorsal/ventral bending
-            dorsal = (dorsal_l + dorsal_r) / 2
-            ventral = (ventral_l + ventral_r) / 2
-            
-            # Combined: L/R difference + D/V difference
-            target_angle = (left_total - right_total) * 0.3 + (dorsal - ventral) * 0.25
+            # Dorsal vs ventral imbalance causes bending
+            target_angle = (dorsal - ventral) * 0.4
             
             # Smooth transition
             self.segment_angles[i] += (target_angle - self.segment_angles[i]) * 0.1
@@ -409,18 +394,11 @@ class WormSimulator:
             perp_y = dx / length
             
             # Draw 2 muscles at this position (MD = dorsal, MV = ventral)
-            # Combine L/R activity for display
             muscle_offset = 22
             
-            # Dorsal muscle (above) - combine MDL + MDR
-            mdl_act = self.muscle_activity.get(f'MDL{i:02d}', 0)
-            mdr_act = self.muscle_activity.get(f'MDR{i:02d}', 0)
-            dorsal_activity = max(mdl_act, mdr_act)
-            
-            # Ventral muscle (below) - combine MVL + MVR
-            mvl_act = self.muscle_activity.get(f'MVL{i:02d}', 0)
-            mvr_act = self.muscle_activity.get(f'MVR{i:02d}', 0)
-            ventral_activity = max(mvl_act, mvr_act)
+            # Get activity
+            dorsal_activity = self.muscle_activity.get(f'MD{i:02d}', 0)
+            ventral_activity = self.muscle_activity.get(f'MV{i:02d}', 0)
             
             muscles_at_pos = [
                 ('MD', 0, -muscle_offset, dorsal_activity),   # Dorsal (above)
