@@ -157,18 +157,37 @@ class WormSimulator:
         worm_length = self.width - 2 * margin
         worm_y = self.height // 2
         
+        # Group neurons by approximate position to spread them out
+        position_counts = {}
+        
         for name, (pos, ntype) in NEURONS.items():
             x = margin + pos * worm_length
+            
             # Offset based on type (sensory=top, motor=bottom, inter=middle)
             if ntype == 's':
-                y = worm_y - 60
+                y = worm_y - 80
             elif ntype == 'i':
-                y = worm_y - 30
+                y = worm_y - 45
             else:  # motor
-                y = worm_y + 40
-            # Add small random offset for visual separation
-            y += np.random.randint(-10, 10)
-            self.neuron_positions[name] = (int(x), int(y))
+                y = worm_y + 60
+            
+            # Handle L/R pairs - offset them vertically
+            if name.endswith('L'):
+                y -= 15
+            elif name.endswith('R'):
+                y += 15
+            
+            # Spread out neurons at similar x positions
+            x_bucket = int(x / 30)  # Group by ~30px buckets
+            key = (x_bucket, ntype)
+            if key not in position_counts:
+                position_counts[key] = 0
+            
+            # Stagger horizontally if multiple neurons in same bucket
+            x_offset = (position_counts[key] % 3) * 25 - 25
+            position_counts[key] += 1
+            
+            self.neuron_positions[name] = (int(x + x_offset), int(y))
     
     def stimulate_neuron(self, name):
         """Stimulate a neuron (set to max activation)."""
