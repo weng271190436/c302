@@ -317,8 +317,6 @@ Inputs: {in_deg} | Outputs: {out_deg}{f' | {dist} hops from source' if sources e
       }
     }
     """)
-    }
-    """)
     
     # Save
     net.write_html(output)
