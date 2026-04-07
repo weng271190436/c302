@@ -215,12 +215,12 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
     
     # Position nodes in horizontal layers
     pos = {}
-    y_spacing = 150  # Vertical space between layers
+    y_spacing = 250  # Vertical space between layers (increased)
     
     for dist in sorted(layers.keys()):
         nodes_in_layer = sorted(layers[dist])  # Sort for consistency
         n = len(nodes_in_layer)
-        x_spacing = max(60, 1200 / (n + 1))  # Spread horizontally
+        x_spacing = max(80, 2000 / (n + 1))  # More horizontal spread
         
         for i, node in enumerate(nodes_in_layer):
             x = (i - n/2) * x_spacing
