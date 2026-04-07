@@ -236,18 +236,14 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         out_deg = subgraph.out_degree(node)
         dist = distances.get(node, '?')
         
-        title_html = f"""
-        <div style='font-family: Arial; padding: 10px; max-width: 300px;'>
-            <h3 style='margin: 0; color: {color};'>{node}</h3>
-            <p style='color: #888; margin: 5px 0;'><b>Type:</b> {ntype.title()}</p>
-            <p style='margin: 5px 0;'>{desc}</p>
-            <hr style='border-color: #444;'>
-            <p style='color: #888; font-size: 12px;'>
-                📥 {in_deg} inputs | 📤 {out_deg} outputs
-                {f'| 🔗 {dist} hops from source' if sources else ''}
-            </p>
-        </div>
-        """
+        # Plain text tooltip (HTML doesn't render in vis.js tooltips)
+        title_html = f"""{node}
+━━━━━━━━━━━━━━━━━━━━
+Type: {ntype.upper()}
+
+{desc}
+
+📥 {in_deg} inputs | 📤 {out_deg} outputs{f' | 🔗 {dist} hops from source' if sources else ''}"""
         
         net.add_node(node, label=node, title=title_html, color=color, size=size,
                      group=ntype, physics=True)
