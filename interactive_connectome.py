@@ -220,7 +220,7 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
     for dist in sorted(layers.keys()):
         nodes_in_layer = sorted(layers[dist])  # Sort for consistency
         n = len(nodes_in_layer)
-        x_spacing = max(80, 2000 / (n + 1))  # More horizontal spread
+        x_spacing = max(120, 4000 / (n + 1))  # Much more horizontal spread
         
         for i, node in enumerate(nodes_in_layer):
             x = (i - n/2) * x_spacing
