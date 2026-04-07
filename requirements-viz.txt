@@ -1,0 +1,8 @@
+# Requirements for connectome visualization scripts
+# Install with: pip install -r requirements-viz.txt
+
+networkx>=3.0
+matplotlib>=3.5
+pandas>=1.5
+pyvis>=0.3
+openpyxl>=3.0  # For reading Excel files
