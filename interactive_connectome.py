@@ -204,20 +204,28 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         distances = {n: 0 for n in G.nodes()}
         title = "C. elegans Connectome"
     
-    # Pre-compute layout so it's stable (no physics jiggling)
-    import networkx as nx
-    pos = nx.spring_layout(subgraph, k=2, iterations=200, seed=42)
+    # Pre-compute HIERARCHICAL layout - sources at top, then layers by hop distance
+    from collections import defaultdict
     
-    # Center source nodes if specified
-    if sources:
-        for i, s in enumerate(sources):
-            if s in pos:
-                pos[s] = (0, 0.1 * (i - len(sources)/2))
+    # Group nodes by distance
+    layers = defaultdict(list)
+    for node in subgraph.nodes():
+        dist = distances.get(node, 0)
+        layers[dist].append(node)
     
-    # Scale to pixel coordinates
-    scale = 600
-    for n in pos:
-        pos[n] = (pos[n][0] * scale, pos[n][1] * scale)
+    # Position nodes in horizontal layers
+    pos = {}
+    y_spacing = 150  # Vertical space between layers
+    
+    for dist in sorted(layers.keys()):
+        nodes_in_layer = sorted(layers[dist])  # Sort for consistency
+        n = len(nodes_in_layer)
+        x_spacing = max(60, 1200 / (n + 1))  # Spread horizontally
+        
+        for i, node in enumerate(nodes_in_layer):
+            x = (i - n/2) * x_spacing
+            y = dist * y_spacing
+            pos[node] = (x, y)
     
     # Create pyvis network with inline CDN (works offline)
     net = Network(height='800px', width='100%', bgcolor='#1a1a2e', font_color='white',
