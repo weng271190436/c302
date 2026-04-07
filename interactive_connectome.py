@@ -204,9 +204,24 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         distances = {n: 0 for n in G.nodes()}
         title = "C. elegans Connectome"
     
-    # Create pyvis network
+    # Pre-compute layout so it's stable (no physics jiggling)
+    import networkx as nx
+    pos = nx.spring_layout(subgraph, k=2, iterations=200, seed=42)
+    
+    # Center source nodes if specified
+    if sources:
+        for i, s in enumerate(sources):
+            if s in pos:
+                pos[s] = (0, 0.1 * (i - len(sources)/2))
+    
+    # Scale to pixel coordinates
+    scale = 600
+    for n in pos:
+        pos[n] = (pos[n][0] * scale, pos[n][1] * scale)
+    
+    # Create pyvis network with inline CDN (works offline)
     net = Network(height='800px', width='100%', bgcolor='#1a1a2e', font_color='white',
-                  directed=True, select_menu=True, filter_menu=True)
+                  directed=True, select_menu=True, cdn_resources='in_line')
     
     # Color scheme
     type_colors = {
@@ -216,7 +231,7 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         'interneuron': '#3498db',  # Blue
     }
     
-    # Add nodes
+    # Add nodes with pre-computed positions
     for node in subgraph.nodes():
         ntype = get_neuron_type(node)
         color = type_colors.get(ntype, '#3498db')
@@ -226,9 +241,10 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         size = 15 + min(degree * 2, 40)
         
         # Highlight sources
-        if sources and node in sources:
+        is_source = sources and node in sources
+        if is_source:
             color = '#00ff00'
-            size = 40
+            size = 50
         
         # Build tooltip
         desc = get_neuron_desc(node)
@@ -237,16 +253,21 @@ def create_interactive_graph(G, sources=None, max_depth=3, output='connectome.ht
         dist = distances.get(node, '?')
         
         # Plain text tooltip (HTML doesn't render in vis.js tooltips)
-        title_html = f"""{node}
-━━━━━━━━━━━━━━━━━━━━
+        tooltip = f"""{node}
+━━━━━━━━━━━━━━━━
 Type: {ntype.upper()}
 
 {desc}
 
-📥 {in_deg} inputs | 📤 {out_deg} outputs{f' | 🔗 {dist} hops from source' if sources else ''}"""
+Inputs: {in_deg} | Outputs: {out_deg}{f' | {dist} hops from source' if sources else ''}"""
         
-        net.add_node(node, label=node, title=title_html, color=color, size=size,
-                     group=ntype, physics=True)
+        x, y = pos.get(node, (0, 0))
+        
+        # Show labels on sources and highly connected nodes
+        label = node if (is_source or degree > 20) else ''
+        
+        net.add_node(node, label=label, title=tooltip, color=color, size=size,
+                     group=ntype, x=x, y=y, physics=False)
     
     # Add edges
     for u, v, data in subgraph.edges(data=True):
@@ -262,40 +283,40 @@ Type: {ntype.upper()}
         # Width based on weight
         width = 0.5 + min(weight / 5, 3)
         
-        edge_title = f"{u} → {v}<br>Type: {conn_type}<br>Weight: {weight}"
+        # Highlight edges from source
+        if sources and u in sources:
+            edge_color = '#00ff00'
+            width = 2
+        
+        edge_title = f"{u} -> {v} ({conn_type}, weight: {weight})"
         
         net.add_edge(u, v, title=edge_title, color=edge_color, width=width,
-                     arrows='to', smooth={'type': 'curvedCW', 'roundness': 0.2})
+                     arrows='to', smooth={'type': 'curvedCW', 'roundness': 0.1})
     
-    # Physics settings for nice layout
+    # Disable physics - we use pre-computed layout
     net.set_options("""
     {
       "nodes": {
-        "font": {"size": 14, "face": "arial"},
-        "borderWidth": 2,
-        "shadow": true
+        "font": {"size": 12, "face": "arial", "strokeWidth": 2, "strokeColor": "#000"},
+        "borderWidth": 2
       },
       "edges": {
         "color": {"inherit": false},
-        "smooth": {"type": "curvedCW", "roundness": 0.2},
+        "smooth": {"type": "curvedCW", "roundness": 0.1},
         "arrows": {"to": {"scaleFactor": 0.5}}
       },
       "physics": {
-        "forceAtlas2Based": {
-          "gravitationalConstant": -100,
-          "centralGravity": 0.01,
-          "springLength": 150,
-          "springConstant": 0.02
-        },
-        "minVelocity": 0.75,
-        "solver": "forceAtlas2Based"
+        "enabled": false
       },
       "interaction": {
         "hover": true,
-        "tooltipDelay": 100,
-        "hideEdgesOnDrag": true,
-        "navigationButtons": true
+        "tooltipDelay": 50,
+        "dragNodes": true,
+        "dragView": true,
+        "zoomView": true
       }
+    }
+    """)
     }
     """)
     
