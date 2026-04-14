@@ -50,7 +50,7 @@ To ensure everything is set up correctly try:
 
 1) Regenerate the NeuroML & LEMS files for one instance of the model:
 
-       python c302/c302_Pharyngeal.py B  # generate pharyngeal network (see fig. above) using parameter set B
+       python -m c302.c302_Pharyngeal B  # generate pharyngeal network (see fig. above) using parameter set B
 
 2) Run a simulation with pyNeuroML:
 

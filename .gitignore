@@ -2,6 +2,7 @@
 /c302.egg-info
 *.pyc
 /dist
+/venv
 /LEMS_c302_A_Syns2.xml
 /c302_A_Syns2.net.nml
 /LEMS_c302_A_Weights.xml

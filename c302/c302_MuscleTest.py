@@ -1,8 +1,5 @@
 import sys
-import os
 import importlib
-
-sys.path.insert(0, os.path.abspath("."))
 
 import c302
 
